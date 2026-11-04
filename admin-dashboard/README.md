@@ -1,15 +1,13 @@
 # Tribal TV Admin Dashboard — Phase 1
 
-This separate React + TypeScript + Vite application is delivered in the `Tribal-TV-Admin-Dashboard-Phase1.zip` source archive supplied in this project conversation.
+This separate React + TypeScript + Vite application is delivered as a source ZIP in the project conversation.
 
 ## Local setup
 
-Extract the archive. It creates a `tribal-tv-admin/` project directory.
-
-Requires Node.js 22.12 or later.
+Extract the ZIP into a new `admin-dashboard/` directory. Requires Node.js 22.12 or later.
 
 1. Copy `.env.example` to `.env.local`.
-2. Set the existing project's Supabase publishable key:
+2. Set the existing project's Supabase URL and **publishable key**:
 
 ```dotenv
 VITE_SUPABASE_URL=https://jigzoerxsbumpijksveo.supabase.co
@@ -17,14 +15,24 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
 3. Run `npm install`, then `npm run dev`.
-4. Sign in with the already-registered administrator account. Public sign-up is not provided.
+4. Sign in with the existing administrator account. Public sign-up is not provided.
 
-## Security and verification
+## Authorization
 
-- Never put a Supabase secret or legacy `service_role` key in frontend code or a `VITE_*` variable.
-- The browser never queries `public.admin_users`; the existing RLS policy is the authorization boundary.
-- Stream URLs, request headers and audit JSON payloads are excluded from dashboard queries.
-- Phase 1 is read-only.
-- The admin-access probe relies on the existing admin-only audit-log SELECT policy and needs at least one audit row. It fails closed if none exists.
-- Supabase schema, grants, RLS policies, migrations and Auth settings were not changed. The Android app was not modified.
-- A real npm install, production build and interactive sign-in are still pending verification; the authoring environment could not resolve `registry.npmjs.org`.
+- The browser validates the session with Supabase Auth.
+- It calls `public.is_current_user_admin()`, an invoker RPC added by `supabase/migrations/20261104125828_add_admin_access_probe_rpc.sql`.
+- The RPC delegates to the existing `private.is_admin()` allow-list function and returns only a boolean.
+- `EXECUTE` is granted only to `authenticated`; `PUBLIC` and `anon` are revoked.
+- The browser never queries `public.admin_users`; that table remains inaccessible to API roles.
+- Existing catalogue RLS policies remain the final authorization boundary.
+
+## Data minimization and constraints
+
+- Stream URLs and request headers are not queried into the browser.
+- Audit JSON payloads (`old_data`, `new_data`) are excluded.
+- Phase 1 is read-only. There are no catalogue CRUD controls.
+- Never place a Supabase secret or `service_role` key in browser code or a `VITE_*` variable.
+
+## Verification
+
+The RPC was tested with simulated admin, non-admin and anonymous database roles. The source syntax was parsed successfully. Full `npm install`, `npm run build`, browser E2E and real administrator sign-in remain pending; see `VERIFICATION.md` in the source ZIP.
