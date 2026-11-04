@@ -20,9 +20,9 @@ VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ## Authorization
 
 - The browser validates the session with Supabase Auth.
-- It calls `public.is_current_user_admin()`, an invoker RPC added by `supabase/migrations/20261104125828_add_admin_access_probe_rpc.sql`.
+- It calls `public.is_current_user_admin()`, an invoker RPC added by two migrations under `supabase/migrations/`.
 - The RPC delegates to the existing `private.is_admin()` allow-list function and returns only a boolean.
-- `EXECUTE` is granted only to `authenticated`; `PUBLIC` and `anon` are revoked.
+- `EXECUTE` is granted to `authenticated`; it is revoked from `PUBLIC`, `anon` and `service_role`.
 - The browser never queries `public.admin_users`; that table remains inaccessible to API roles.
 - Existing catalogue RLS policies remain the final authorization boundary.
 
